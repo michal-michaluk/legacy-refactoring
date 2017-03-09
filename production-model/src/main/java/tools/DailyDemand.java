@@ -13,4 +13,8 @@ public class DailyDemand {
     private final LocalDate date;
     private final long level;
     private final DeliverySchema schema;
+
+    public static DailyDemand zero(LocalDate day) {
+        return new DailyDemand(day, 0L, DeliverySchema.tillEndOfDay);
+    }
 }

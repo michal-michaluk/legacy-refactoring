@@ -33,13 +33,8 @@ public class Forecast {
 
         List<ShortageEntity> gap = new LinkedList<>();
         for (LocalDate day : range.getDays()) {
-            DailyDemand demand = demands.get(day);
-            if (demand == null) {
-                long production = outputs.get(day);
-                level += production;
-                continue;
-            }
-            long produced = outputs.get(day);
+            DailyDemand demand = demands.getOrDefault(day, DailyDemand.zero(day));
+            long produced = outputs.getOrDefault(day, 0L);
 
             long levelOnDelivery;
             if (demand.getSchema() == DeliverySchema.atDayStart) {
@@ -55,17 +50,21 @@ public class Forecast {
             }
 
             if (!(levelOnDelivery >= 0)) {
-                ShortageEntity entity = new ShortageEntity();
-                entity.setRefNo(productRefNo);
-                entity.setFound(LocalDate.now());
-                entity.setAtDay(day);
-                gap.add(entity);
+                gap.add(createShortage(day));
             }
             long endOfDayLevel = level + produced - demand.getLevel();
             // TODO: ASK accumulated shortages or reset when under zero?
             level = endOfDayLevel >= 0 ? endOfDayLevel : 0;
         }
         return gap;
+    }
+
+    private ShortageEntity createShortage(LocalDate day) {
+        ShortageEntity entity = new ShortageEntity();
+        entity.setRefNo(productRefNo);
+        entity.setFound(LocalDate.now());
+        entity.setAtDay(day);
+        return entity;
     }
 
     public List<ShortageEntity> tryShortages(DateRange range, AdjustDemandDto withAdjustement) {
