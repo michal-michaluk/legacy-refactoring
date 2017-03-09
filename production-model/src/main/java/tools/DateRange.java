@@ -27,13 +27,13 @@ import static java.util.stream.Collectors.toList;
  * customer always specifies desired delivery schema
  * (increase amount in scheduled transport or organize extra transport at given time)
  */
-public class PredictionRange {
+public class DateRange {
 
     @Getter
     private final List<LocalDate> days;
 
-    public static PredictionRange range(LocalDate start, int daysAhead) {
-        return new PredictionRange(
+    public static DateRange range(LocalDate start, int daysAhead) {
+        return new DateRange(
                 Collections.unmodifiableList(
                         Stream.iterate(start, date -> date.plusDays(1))
                                 .limit(daysAhead)
@@ -42,7 +42,7 @@ public class PredictionRange {
         );
     }
 
-    private PredictionRange(List<LocalDate> days) {
+    private DateRange(List<LocalDate> days) {
         this.days = days;
     }
 }

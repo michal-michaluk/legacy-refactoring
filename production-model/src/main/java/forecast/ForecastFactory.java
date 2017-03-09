@@ -1,4 +1,4 @@
-package services.impl;
+package forecast;
 
 import dao.DemandDao;
 import dao.ProductionDao;
@@ -6,8 +6,7 @@ import entities.ProductionEntity;
 import external.CurrentStock;
 import external.StockService;
 import tools.DailyDemand;
-import tools.FinderParameter;
-import tools.ShortageFinder;
+import forecast.Forecast;
 import tools.Util;
 
 import java.time.LocalDate;
@@ -19,22 +18,19 @@ import static java.util.stream.Collectors.toMap;
 /**
  * Created by michal on 09.03.2017.
  */
-public class ShortageFinderFactory {
+public class ForecastFactory {
 
     // inject with spring
     private DemandDao demandDao;
     private StockService stockService;
     private ProductionDao productionDao;
 
-    public ShortageFinder create(String productRefNo, LocalDate today) {
+    public Forecast create(String productRefNo, LocalDate today) {
         CurrentStock stock = stockService.getCurrentStock(productRefNo);
-
         Map<LocalDate, Long> outputs = loadProductions(productRefNo, today);
         Map<LocalDate, DailyDemand> demandsPerDay = loadDailyDemands(productRefNo, today);
 
-        return new ShortageFinder(new FinderParameter(
-                productRefNo, stock, outputs, demandsPerDay
-        ));
+        return new Forecast(productRefNo, stock, outputs, demandsPerDay);
     }
 
     private Map<LocalDate, Long> loadProductions(String productRefNo, LocalDate today) {

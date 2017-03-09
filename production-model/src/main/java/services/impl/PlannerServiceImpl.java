@@ -7,12 +7,10 @@ import entities.FormEntity;
 import entities.LineEntity;
 import entities.ProductionEntity;
 import entities.ShortageEntity;
-import external.CurrentStock;
 import external.JiraService;
 import external.NotificationsService;
-import external.StockService;
-import tools.FinderParameter;
-import tools.ShortageFinder;
+import forecast.Forecast;
+import forecast.ForecastFactory;
 import tools.Util;
 
 import java.time.Clock;
@@ -22,13 +20,13 @@ import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
 
-import static tools.PredictionRange.range;
+import static tools.DateRange.range;
 
 public class PlannerServiceImpl implements PlannerService {
 
     //Inject all
     private ProductionDao productionDao;
-    private ShortageFinderFactory factory;
+    private ForecastFactory factory;
     private LineDao lineDao;
     private FormDao formDao;
     private ShortageDao shortageDao;
@@ -240,7 +238,7 @@ public class PlannerServiceImpl implements PlannerService {
         LocalDate today = LocalDate.now(clock);
 
         for (ProductionEntity production : products) {
-            ShortageFinder finder = factory.create(production.getForm().getRefNo(), today);
+            Forecast finder = factory.create(production.getForm().getRefNo(), today);
             List<ShortageEntity> shortages = finder.findShortages(
                     range(today, confShortagePredictionDaysAhead)
             );

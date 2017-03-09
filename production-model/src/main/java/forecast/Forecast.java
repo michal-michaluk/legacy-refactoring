@@ -1,44 +1,45 @@
-package tools;
+package forecast;
 
 import api.AdjustDemandDto;
-import entities.DemandEntity;
-import entities.ProductionEntity;
 import entities.ShortageEntity;
 import enums.DeliverySchema;
 import external.CurrentStock;
+import lombok.AllArgsConstructor;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import tools.DailyDemand;
+import tools.DateRange;
 
 import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
-public class ShortageFinder {
+@AllArgsConstructor
+public class Forecast {
 
-    private final FinderParameter parameter;
-
-    public ShortageFinder(FinderParameter parameter) {
-        this.parameter = parameter;
-    }
+    private final String productRefNo;
+    private final CurrentStock stock;
+    private final Map<LocalDate, Long> outputs;
+    private final Map<LocalDate, DailyDemand> demands;
 
     public long getLocked() {
-        return parameter.getLocked();
+        return stock.getLocked();
     }
 
-    public List<ShortageEntity> findShortages(PredictionRange range) {
+    public List<ShortageEntity> findShortages(DateRange range) {
         // TODO ASK including locked or only proper parts
         // TODO ASK current stock or on day start? what if we are in the middle of production a day?
-        String productRefNo = parameter.getProductRefNo();
-        long level = parameter.getLevel();
+        long level = stock.getLevel();
 
         List<ShortageEntity> gap = new LinkedList<>();
         for (LocalDate day : range.getDays()) {
-            DailyDemand demand = parameter.getDemand(day);
+            DailyDemand demand = demands.get(day);
             if (demand == null) {
-                long production = parameter.getOutputs(day);
+                long production = outputs.get(day);
                 level += production;
                 continue;
             }
-            long produced = parameter.getOutputs(day);
+            long produced = outputs.get(day);
 
             long levelOnDelivery;
             if (demand.getSchema() == DeliverySchema.atDayStart) {
@@ -67,9 +68,7 @@ public class ShortageFinder {
         return gap;
     }
 
-    public static List<ShortageEntity> tryShortages(PredictionRange range, CurrentStock stock,
-                                                    List<ProductionEntity> productions, List<DemandEntity> demands,
-                                                    AdjustDemandDto withAdjustement) {
+    public List<ShortageEntity> tryShortages(DateRange range, AdjustDemandDto withAdjustement) {
         // TODO do we need that ?
         return null;
     }

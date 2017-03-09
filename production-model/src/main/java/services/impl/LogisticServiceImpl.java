@@ -10,21 +10,21 @@ import entities.ManualAdjustmentEntity;
 import entities.ShortageEntity;
 import external.JiraService;
 import external.NotificationsService;
-import tools.PredictionRange;
-import tools.ShortageFinder;
+import forecast.Forecast;
+import forecast.ForecastFactory;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
-import static tools.PredictionRange.range;
+import static tools.DateRange.range;
 
 public class LogisticServiceImpl implements LogisticService {
 
     //Inject all
     private DemandDao demandDao;
     private ShortageDao shortageDao;
-    private ShortageFinderFactory factory;
+    private ForecastFactory factory;
 
     private NotificationsService notificationService;
     private JiraService jiraService;
@@ -98,7 +98,7 @@ public class LogisticServiceImpl implements LogisticService {
 
     private void processShortages(String productRefNo) {
         LocalDate today = LocalDate.now(clock);
-        ShortageFinder finder = factory.create(productRefNo, today);
+        Forecast finder = factory.create(productRefNo, today);
         List<ShortageEntity> shortages = finder.findShortages(
                 range(today, confShortagePredictionDaysAhead)
         );
