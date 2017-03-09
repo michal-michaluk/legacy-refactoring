@@ -1,15 +1,10 @@
 package tools;
 
-import entities.DemandEntity;
 import entities.ProductionEntity;
 import external.CurrentStock;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-
-import static java.util.stream.Collectors.toMap;
 
 /**
  * Created by michal on 09.03.2017.
@@ -17,27 +12,16 @@ import static java.util.stream.Collectors.toMap;
 public class FinderParameter {
     private String productRefNo;
     private CurrentStock stock;
-    private Map<LocalDate, ProductionEntity> outputs;
-    private Map<LocalDate, DemandEntity> demandsPerDay;
+    private Map<LocalDate, Long> outputs;
+    private Map<LocalDate, DailyDemand> demandsPerDay;
 
     public FinderParameter(String productRefNo, CurrentStock stock,
-                           List<ProductionEntity> productions,
-                           List<DemandEntity> demands) {
-        assert productions.stream()
-                .map(p -> p.getForm().getRefNo())
-                .allMatch(s -> s.equals(productRefNo));
-
+                           Map<LocalDate, Long> outputs,
+                           Map<LocalDate, DailyDemand> demandsPerDay) {
         this.stock = stock;
         this.productRefNo = productRefNo;
-        this.outputs = productions.stream()
-                .collect(toMap(
-                        p -> p.getStart().toLocalDate(),
-                        Function.identity())
-                );
-        this.demandsPerDay = demands.stream()
-                .collect(toMap(DemandEntity::getDay,
-                        Function.identity())
-                );
+        this.outputs = outputs;
+        this.demandsPerDay = demandsPerDay;
     }
 
     public String getProductRefNo() {
@@ -45,30 +29,18 @@ public class FinderParameter {
     }
 
     public long getOutputs(LocalDate day) {
-        if (outputs.containsKey(day)) {
-            return outputs.get(day).getOutput();
-        }
-        return 0;
-
-        // alternative notation:
-        // return Optional.ofNullable(outputs.get(day))
-        //         .map(ProductionEntity::getOutput)
-        //         .orElse(0L);
+        return outputs.getOrDefault(day, 0L);
     }
 
     public long getLevel() {
         return stock.getLevel();
     }
 
+    public long getLocked() {
+        return stock.getLocked();
+    }
+
     public DailyDemand getDemand(LocalDate day) {
-        if (demandsPerDay.containsKey(day)) {
-            DemandEntity demandEntity = demandsPerDay.get(day);
-            return new DailyDemand(
-                    Util.getLevel(demandEntity),
-                    Util.getDeliverySchema(demandEntity)
-            );
-        } else {
-            return null;
-        }
+        return demandsPerDay.get(day);
     }
 }

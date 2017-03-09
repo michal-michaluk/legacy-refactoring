@@ -28,11 +28,10 @@ public class PlannerServiceImpl implements PlannerService {
 
     //Inject all
     private ProductionDao productionDao;
+    private ShortageFinderFactory factory;
     private LineDao lineDao;
     private FormDao formDao;
     private ShortageDao shortageDao;
-    private StockService stockService;
-    private DemandDao demandDao;
 
     private NotificationsService notificationService;
     private JiraService jiraService;
@@ -241,20 +240,17 @@ public class PlannerServiceImpl implements PlannerService {
         LocalDate today = LocalDate.now(clock);
 
         for (ProductionEntity production : products) {
-            CurrentStock currentStock = stockService.getCurrentStock(production.getForm().getRefNo());
-            ShortageFinder finder = new ShortageFinder(new FinderParameter(
-                    production.getForm().getRefNo(),
-                    currentStock,
-                    productionDao.findFromTime(production.getForm().getRefNo(), today.atStartOfDay()),
-                    demandDao.findFrom(today.atStartOfDay(), production.getForm().getRefNo())
-            ));
+            ShortageFinder finder = factory.create(production.getForm().getRefNo(), today);
             List<ShortageEntity> shortages = finder.findShortages(
                     range(today, confShortagePredictionDaysAhead)
             );
+
+
+
             List<ShortageEntity> previous = shortageDao.getForProduct(production.getForm().getRefNo());
             if (!shortages.isEmpty() && !shortages.equals(previous)) {
                 notificationService.markOnPlan(shortages);
-                if (currentStock.getLocked() > 0 &&
+                if (finder.getLocked() > 0 &&
                         shortages.get(0).getAtDay()
                                 .isBefore(today.plusDays(confIncreaseQATaskPriorityInDays))) {
                     jiraService.increasePriorityFor(production.getForm().getRefNo());

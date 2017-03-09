@@ -23,9 +23,7 @@ public class QualityServiceImpl implements QualityService {
 
     //Inject all
     private ShortageDao shortageDao;
-    private ProductionDao productionDao;
-    private StockService stockService;
-    private DemandDao demandDao;
+    private ShortageFinderFactory factory;
 
     private NotificationsService notificationService;
     private JiraService jiraService;
@@ -68,12 +66,7 @@ public class QualityServiceImpl implements QualityService {
 
     public void processShortages(String productRefNo) {
         LocalDate today = LocalDate.now(clock);
-        CurrentStock currentStock = stockService.getCurrentStock(productRefNo);
-        ShortageFinder finder = new ShortageFinder(new FinderParameter(
-                productRefNo, currentStock,
-                productionDao.findFromTime(productRefNo, today.atStartOfDay()),
-                demandDao.findFrom(today.atStartOfDay(), productRefNo)
-        ));
+        ShortageFinder finder = factory.create(productRefNo, today);
         List<ShortageEntity> shortages = finder.findShortages(
                 range(today, confShortagePredictionDaysAhead)
         );
@@ -81,7 +74,7 @@ public class QualityServiceImpl implements QualityService {
         List<ShortageEntity> previous = shortageDao.getForProduct(productRefNo);
         if (!shortages.isEmpty() && !shortages.equals(previous)) {
             notificationService.softNotifyPlanner(shortages);
-            if (currentStock.getLocked() > 0 &&
+            if (finder.getLocked() > 0 &&
                     shortages.get(0).getAtDay()
                             .isBefore(today.plusDays(confIncreaseQATaskPriorityInDays))) {
                 jiraService.increasePriorityFor(productRefNo);

@@ -20,6 +20,10 @@ public class ShortageFinder {
         this.parameter = parameter;
     }
 
+    public long getLocked() {
+        return parameter.getLocked();
+    }
+
     public List<ShortageEntity> findShortages(PredictionRange range) {
         // TODO ASK including locked or only proper parts
         // TODO ASK current stock or on day start? what if we are in the middle of production a day?

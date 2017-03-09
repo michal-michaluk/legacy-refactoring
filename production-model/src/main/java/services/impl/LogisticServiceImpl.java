@@ -4,16 +4,13 @@ import api.AdjustDemandDto;
 import api.LogisticService;
 import api.StockForecastDto;
 import dao.DemandDao;
-import dao.ProductionDao;
 import dao.ShortageDao;
 import entities.DemandEntity;
 import entities.ManualAdjustmentEntity;
 import entities.ShortageEntity;
-import external.CurrentStock;
 import external.JiraService;
 import external.NotificationsService;
-import external.StockService;
-import tools.FinderParameter;
+import tools.PredictionRange;
 import tools.ShortageFinder;
 
 import java.time.Clock;
@@ -27,8 +24,7 @@ public class LogisticServiceImpl implements LogisticService {
     //Inject all
     private DemandDao demandDao;
     private ShortageDao shortageDao;
-    private StockService stockService;
-    private ProductionDao productionDao;
+    private ShortageFinderFactory factory;
 
     private NotificationsService notificationService;
     private JiraService jiraService;
@@ -102,13 +98,7 @@ public class LogisticServiceImpl implements LogisticService {
 
     private void processShortages(String productRefNo) {
         LocalDate today = LocalDate.now(clock);
-        CurrentStock stock = stockService.getCurrentStock(productRefNo);
-
-        ShortageFinder finder = new ShortageFinder(new FinderParameter(
-                productRefNo, stock,
-                productionDao.findFromTime(productRefNo, today.atStartOfDay()),
-                demandDao.findFrom(today.atStartOfDay(), productRefNo)
-        ));
+        ShortageFinder finder = factory.create(productRefNo, today);
         List<ShortageEntity> shortages = finder.findShortages(
                 range(today, confShortagePredictionDaysAhead)
         );
@@ -116,7 +106,7 @@ public class LogisticServiceImpl implements LogisticService {
         List<ShortageEntity> previous = shortageDao.getForProduct(productRefNo);
         if (!shortages.isEmpty() && !shortages.equals(previous)) {
             notificationService.alertPlanner(shortages);
-            if (stock.getLocked() > 0 &&
+            if (finder.getLocked() > 0 &&
                     shortages.get(0).getAtDay()
                             .isBefore(today.plusDays(confIncreaseQATaskPriorityInDays))) {
                 jiraService.increasePriorityFor(productRefNo);
@@ -127,4 +117,5 @@ public class LogisticServiceImpl implements LogisticService {
             shortageDao.delete(productRefNo);
         }
     }
+
 }
