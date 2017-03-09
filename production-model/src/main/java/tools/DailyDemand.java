@@ -1,6 +1,7 @@
 package tools;
 
 import enums.DeliverySchema;
+import forecast.Calc;
 import lombok.Value;
 
 import java.time.LocalDate;
@@ -12,9 +13,14 @@ import java.time.LocalDate;
 public class DailyDemand {
     private final LocalDate date;
     private final long level;
-    private final DeliverySchema schema;
+    private final Calc calc;
 
     public static DailyDemand zero(LocalDate day) {
-        return new DailyDemand(day, 0L, DeliverySchema.tillEndOfDay);
+        return new DailyDemand(day, 0L,
+                (level1, demand, produced) -> level1 + produced);
+    }
+
+    public long calculate(long level, long produced) {
+        return calc.calculate(level, this, produced);
     }
 }

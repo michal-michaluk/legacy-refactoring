@@ -36,18 +36,7 @@ public class Forecast {
             DailyDemand demand = demands.getOrDefault(day, DailyDemand.zero(day));
             long produced = outputs.getOrDefault(day, 0L);
 
-            long levelOnDelivery;
-            if (demand.getSchema() == DeliverySchema.atDayStart) {
-                levelOnDelivery = level - demand.getLevel();
-            } else if (demand.getSchema() == DeliverySchema.tillEndOfDay) {
-                levelOnDelivery = level - demand.getLevel() + produced;
-            } else if (demand.getSchema() == DeliverySchema.every3hours) {
-                // TODO WTF ?? we need to rewrite that app :/
-                throw new NotImplementedException();
-            } else {
-                // TODO implement other variants
-                throw new NotImplementedException();
-            }
+            long levelOnDelivery = demand.calculate(level, produced);
 
             if (!(levelOnDelivery >= 0)) {
                 gap.add(createShortage(day));

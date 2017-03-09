@@ -3,10 +3,10 @@ package forecast;
 import dao.DemandDao;
 import dao.ProductionDao;
 import entities.ProductionEntity;
+import enums.DeliverySchema;
 import external.CurrentStock;
 import external.StockService;
 import tools.DailyDemand;
-import forecast.Forecast;
 import tools.Util;
 
 import java.time.LocalDate;
@@ -24,6 +24,7 @@ public class ForecastFactory {
     private DemandDao demandDao;
     private StockService stockService;
     private ProductionDao productionDao;
+
 
     public Forecast create(String productRefNo, LocalDate today) {
         CurrentStock stock = stockService.getCurrentStock(productRefNo);
@@ -47,10 +48,24 @@ public class ForecastFactory {
                 .map(demandEntity -> new DailyDemand(
                         demandEntity.getDay(),
                         Util.getLevel(demandEntity),
-                        Util.getDeliverySchema(demandEntity)
+                        pickStrategy(Util.getDeliverySchema(demandEntity))
                 ))
                 .collect(toMap(DailyDemand::getDate,
                         Function.identity())
                 );
+    }
+
+    private Calc pickStrategy(DeliverySchema schema) {
+        if (schema == DeliverySchema.atDayStart) {
+            return Calc.atDayStart;
+        } else if (schema == DeliverySchema.tillEndOfDay) {
+            return Calc.tillEndOfDay;
+        } else if (schema == DeliverySchema.every3hours) {
+            // TODO WTF ?? we need to rewrite that app :/
+            return Calc.NOT_IMPLEMENTED;
+        } else {
+            // TODO implement other variants
+            return Calc.NOT_IMPLEMENTED;
+        }
     }
 }
