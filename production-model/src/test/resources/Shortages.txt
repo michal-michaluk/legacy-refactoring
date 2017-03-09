@@ -1,0 +1,24 @@
+
+    public Optional<Shortage> findShortages(CurrentStock stock, ProductionForecast productionForecast) {
+        LocalDate today = LocalDate.now(clock);
+        long level = stock.getLevel();
+
+        Shortage.Builder gap = Shortage.builder(productRefNo);
+        LocalDate end = today.isBefore(demandsPerDay.lastKey()) ? demandsPerDay.lastKey() : today;
+
+        List<LocalDate> dates = Stream.iterate(today, date -> date.plusDays(1))
+                .limit(Period.between(today, end).getDays() + 1)
+                .collect(toList());
+
+        for (LocalDate day : dates) {
+            DailyDemand dailyDemand = demandsPerDay.get(day);
+            long produced = productionForecast.outputFor(day);
+            long levelOnDelivery = dailyDemand.calculate(level, produced);
+            if (!(levelOnDelivery >= 0)) {
+                gap.add(day, levelOnDelivery);
+            }
+            long endOfDayLevel = level + produced - dailyDemand.getLevel();
+            level = endOfDayLevel >= 0 ? endOfDayLevel : 0;
+        }
+        return gap.build();
+    }
