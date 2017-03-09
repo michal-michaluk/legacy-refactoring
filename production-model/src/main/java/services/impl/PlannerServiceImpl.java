@@ -242,14 +242,14 @@ public class PlannerServiceImpl implements PlannerService {
 
         for (ProductionEntity production : products) {
             CurrentStock currentStock = stockService.getCurrentStock(production.getForm().getRefNo());
-            List<ShortageEntity> shortages = ShortageFinder.findShortages(
-                    range(today, confShortagePredictionDaysAhead),
-                    new FinderParameter(
-                            production.getForm().getRefNo(),
-                            currentStock,
-                            productionDao.findFromTime(production.getForm().getRefNo(), today.atStartOfDay()),
-                            demandDao.findFrom(today.atStartOfDay(), production.getForm().getRefNo())
-                    )
+            ShortageFinder finder = new ShortageFinder(new FinderParameter(
+                    production.getForm().getRefNo(),
+                    currentStock,
+                    productionDao.findFromTime(production.getForm().getRefNo(), today.atStartOfDay()),
+                    demandDao.findFrom(today.atStartOfDay(), production.getForm().getRefNo())
+            ));
+            List<ShortageEntity> shortages = finder.findShortages(
+                    range(today, confShortagePredictionDaysAhead)
             );
             List<ShortageEntity> previous = shortageDao.getForProduct(production.getForm().getRefNo());
             if (!shortages.isEmpty() && !shortages.equals(previous)) {

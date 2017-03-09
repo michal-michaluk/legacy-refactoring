@@ -8,7 +8,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -31,7 +30,7 @@ public class FinderParameter {
         this.stock = stock;
         this.productRefNo = productRefNo;
         this.outputs = productions.stream()
-                .collect(Collectors.toMap(
+                .collect(toMap(
                         p -> p.getStart().toLocalDate(),
                         Function.identity())
                 );
@@ -46,18 +45,30 @@ public class FinderParameter {
     }
 
     public long getOutputs(LocalDate day) {
-        return outputs.get(day).getOutput();
-    }
+        if (outputs.containsKey(day)) {
+            return outputs.get(day).getOutput();
+        }
+        return 0;
 
-    public Map<LocalDate, DemandEntity> getDemands() {
-        return demandsPerDay;
+        // alternative notation:
+        // return Optional.ofNullable(outputs.get(day))
+        //         .map(ProductionEntity::getOutput)
+        //         .orElse(0L);
     }
 
     public long getLevel() {
         return stock.getLevel();
     }
 
-    public DemandEntity getDemand(LocalDate day) {
-        return demandsPerDay.get(day);
+    public DailyDemand getDemand(LocalDate day) {
+        if (demandsPerDay.containsKey(day)) {
+            DemandEntity demandEntity = demandsPerDay.get(day);
+            return new DailyDemand(
+                    Util.getLevel(demandEntity),
+                    Util.getDeliverySchema(demandEntity)
+            );
+        } else {
+            return null;
+        }
     }
 }

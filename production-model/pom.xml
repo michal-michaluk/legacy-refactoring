@@ -39,7 +39,7 @@
             <groupId>com.bottega</groupId>
             <artifactId>production-persistence</artifactId>
             <version>1.0-SNAPSHOT</version>
-    </dependency>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-parameter-names</artifactId>

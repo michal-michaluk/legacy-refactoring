@@ -1,6 +1,5 @@
 package tools;
 
-import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -37,8 +36,8 @@ public class PredictionRange {
         return new PredictionRange(
                 Collections.unmodifiableList(
                         Stream.iterate(start, date -> date.plusDays(1))
-                        .limit(daysAhead)
-                        .collect(toList())
+                                .limit(daysAhead)
+                                .collect(toList())
                 )
         );
     }

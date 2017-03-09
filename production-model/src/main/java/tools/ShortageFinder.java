@@ -9,22 +9,18 @@ import external.CurrentStock;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 public class ShortageFinder {
 
-    public static List<ShortageEntity> tryShortages(PredictionRange range, CurrentStock stock,
-                                                    List<ProductionEntity> productions, List<DemandEntity> demands,
-                                                    AdjustDemandDto withAdjustement) {
-        // TODO do we need that ?
-        return null;
+    private final FinderParameter parameter;
+
+    public ShortageFinder(FinderParameter parameter) {
+        this.parameter = parameter;
     }
 
-    public static List<ShortageEntity> findShortages(PredictionRange range,
-                                                     FinderParameter parameter) {
+    public List<ShortageEntity> findShortages(PredictionRange range) {
         // TODO ASK including locked or only proper parts
         // TODO ASK current stock or on day start? what if we are in the middle of production a day?
         String productRefNo = parameter.getProductRefNo();
@@ -32,7 +28,7 @@ public class ShortageFinder {
 
         List<ShortageEntity> gap = new LinkedList<>();
         for (LocalDate day : range.getDays()) {
-            DemandEntity demand = parameter.getDemand(day);
+            DailyDemand demand = parameter.getDemand(day);
             if (demand == null) {
                 long production = parameter.getOutputs(day);
                 level += production;
@@ -41,11 +37,11 @@ public class ShortageFinder {
             long produced = parameter.getOutputs(day);
 
             long levelOnDelivery;
-            if (Util.getDeliverySchema(demand) == DeliverySchema.atDayStart) {
-                levelOnDelivery = level - Util.getLevel(demand);
-            } else if (Util.getDeliverySchema(demand) == DeliverySchema.tillEndOfDay) {
-                levelOnDelivery = level - Util.getLevel(demand) + produced;
-            } else if (Util.getDeliverySchema(demand) == DeliverySchema.every3hours) {
+            if (demand.getSchema() == DeliverySchema.atDayStart) {
+                levelOnDelivery = level - demand.getLevel();
+            } else if (demand.getSchema() == DeliverySchema.tillEndOfDay) {
+                levelOnDelivery = level - demand.getLevel() + produced;
+            } else if (demand.getSchema() == DeliverySchema.every3hours) {
                 // TODO WTF ?? we need to rewrite that app :/
                 throw new NotImplementedException();
             } else {
@@ -60,13 +56,17 @@ public class ShortageFinder {
                 entity.setAtDay(day);
                 gap.add(entity);
             }
-            long endOfDayLevel = level + produced - Util.getLevel(demand);
+            long endOfDayLevel = level + produced - demand.getLevel();
             // TODO: ASK accumulated shortages or reset when under zero?
             level = endOfDayLevel >= 0 ? endOfDayLevel : 0;
         }
         return gap;
     }
 
-    private ShortageFinder() {
+    public static List<ShortageEntity> tryShortages(PredictionRange range, CurrentStock stock,
+                                                    List<ProductionEntity> productions, List<DemandEntity> demands,
+                                                    AdjustDemandDto withAdjustement) {
+        // TODO do we need that ?
+        return null;
     }
 }

@@ -12,7 +12,6 @@ import external.JiraService;
 import external.NotificationsService;
 import external.StockService;
 import tools.FinderParameter;
-import tools.PredictionRange;
 import tools.ShortageFinder;
 
 import java.time.Clock;
@@ -70,14 +69,14 @@ public class WarehouseServiceImpl implements WarehouseService {
     public void processShortages(String productRefNo) {
         LocalDate today = LocalDate.now(clock);
         CurrentStock currentStock = stockService.getCurrentStock(productRefNo);
-        List<ShortageEntity> shortages = ShortageFinder.findShortages(
-                range(today, confShortagePredictionDaysAhead),
-                new FinderParameter(
-                        productRefNo,
-                        currentStock,
-                        productionDao.findFromTime(productRefNo, today.atStartOfDay()),
-                        demandDao.findFrom(today.atStartOfDay(), productRefNo)
-                )
+        ShortageFinder finder = new ShortageFinder(new FinderParameter(
+                productRefNo,
+                currentStock,
+                productionDao.findFromTime(productRefNo, today.atStartOfDay()),
+                demandDao.findFrom(today.atStartOfDay(), productRefNo)
+        ));
+        List<ShortageEntity> shortages = finder.findShortages(
+                range(today, confShortagePredictionDaysAhead)
         );
 
         List<ShortageEntity> previous = shortageDao.getForProduct(productRefNo);
