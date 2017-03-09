@@ -10,11 +10,14 @@ import external.CurrentStock;
 import external.JiraService;
 import external.NotificationsService;
 import external.StockService;
+import tools.FinderParameter;
 import tools.ShortageFinder;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+
+import static tools.PredictionRange.range;
 
 public class QualityServiceImpl implements QualityService {
 
@@ -67,11 +70,12 @@ public class QualityServiceImpl implements QualityService {
         LocalDate today = LocalDate.now(clock);
         CurrentStock currentStock = stockService.getCurrentStock(productRefNo);
         List<ShortageEntity> shortages = ShortageFinder.findShortages(
-                today, confShortagePredictionDaysAhead,
-                currentStock,
-                productionDao.findFromTime(productRefNo, today.atStartOfDay()),
-                demandDao.findFrom(today.atStartOfDay(), productRefNo)
-        );
+                range(today, confShortagePredictionDaysAhead),
+                new FinderParameter(
+                        productRefNo, currentStock,
+                        productionDao.findFromTime(productRefNo, today.atStartOfDay()),
+                        demandDao.findFrom(today.atStartOfDay(), productRefNo)
+                ));
 
         List<ShortageEntity> previous = shortageDao.getForProduct(productRefNo);
         if (!shortages.isEmpty() && !shortages.equals(previous)) {

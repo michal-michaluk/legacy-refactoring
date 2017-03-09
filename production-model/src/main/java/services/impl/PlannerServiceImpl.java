@@ -11,6 +11,7 @@ import external.CurrentStock;
 import external.JiraService;
 import external.NotificationsService;
 import external.StockService;
+import tools.FinderParameter;
 import tools.ShortageFinder;
 import tools.Util;
 
@@ -20,6 +21,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
+
+import static tools.PredictionRange.range;
 
 public class PlannerServiceImpl implements PlannerService {
 
@@ -240,10 +243,13 @@ public class PlannerServiceImpl implements PlannerService {
         for (ProductionEntity production : products) {
             CurrentStock currentStock = stockService.getCurrentStock(production.getForm().getRefNo());
             List<ShortageEntity> shortages = ShortageFinder.findShortages(
-                    today, confShortagePredictionDaysAhead,
-                    currentStock,
-                    productionDao.findFromTime(production.getForm().getRefNo(), today.atStartOfDay()),
-                    demandDao.findFrom(today.atStartOfDay(), production.getForm().getRefNo())
+                    range(today, confShortagePredictionDaysAhead),
+                    new FinderParameter(
+                            production.getForm().getRefNo(),
+                            currentStock,
+                            productionDao.findFromTime(production.getForm().getRefNo(), today.atStartOfDay()),
+                            demandDao.findFrom(today.atStartOfDay(), production.getForm().getRefNo())
+                    )
             );
             List<ShortageEntity> previous = shortageDao.getForProduct(production.getForm().getRefNo());
             if (!shortages.isEmpty() && !shortages.equals(previous)) {
