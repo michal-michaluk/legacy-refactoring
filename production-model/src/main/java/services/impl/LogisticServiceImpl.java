@@ -4,34 +4,18 @@ import api.AdjustDemandDto;
 import api.LogisticService;
 import api.StockForecastDto;
 import dao.DemandDao;
-import dao.ShortageDao;
 import entities.DemandEntity;
 import entities.ManualAdjustmentEntity;
-import entities.ShortageEntity;
-import external.JiraService;
-import external.NotificationsService;
-import forecast.Forecast;
-import forecast.ForecastFactory;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.List;
-
-import static forecast.DateRange.range;
 
 public class LogisticServiceImpl implements LogisticService {
 
     //Inject all
     private DemandDao demandDao;
-    private ShortageDao shortageDao;
-    private ForecastFactory factory;
-
-    private NotificationsService notificationService;
-    private JiraService jiraService;
+    private ShortageBlaBlaService service;
     private Clock clock;
-
-    private int confShortagePredictionDaysAhead;
-    private long confIncreaseQATaskPriorityInDays;
 
     /**
      * <pre>
@@ -42,11 +26,6 @@ public class LogisticServiceImpl implements LogisticService {
      *   Should be possible to adjust demand even
      *  if there was no callof document for that product.
      *    Logistician note should be kept along with adjustment.
-     *  If new demand is not fulfilled by  current product stock and production forecast
-     *    there is a shortage in particular days and we need to rise an alert.
-     *    planner should be notified,
-     *    if there are locked parts on stock,
-     *      QA task for recovering them should have high priority.
      * </pre>
      *
      * @param adjustment
@@ -66,7 +45,7 @@ public class LogisticServiceImpl implements LogisticService {
 
         demand.getAdjustment().add(manualAdjustment);
 
-        processShortages(adjustment.getProductRefNo());
+        service.processShortages_Logistic(adjustment.getProductRefNo());
     }
 
     /**
@@ -74,11 +53,6 @@ public class LogisticServiceImpl implements LogisticService {
      * Daily processing of callof document:
      * for all products included in callof document
      *   New demand are stored for further reference
-     *   If new demand is not fulfilled by product stock and production forecast
-     *     there is a shortage in particular days and we need to rise an alert.
-     *     planner should be notified in that case,
-     *     if there are locked parts on stock,
-     *       QA task for recovering them should have high priority.
      * </pre>
      *
      * @param document
@@ -87,35 +61,13 @@ public class LogisticServiceImpl implements LogisticService {
     @Override
     public void processCallof(Object document) {
         // TODO implement me later
-        // processShortages()
+        // processShortages_Warehouse()
     }
 
     //ReadOnly
     @Override
     public StockForecastDto getStockForecast(String productRefNo) {
         return new StockForecastDto();
-    }
-
-    private void processShortages(String productRefNo) {
-        LocalDate today = LocalDate.now(clock);
-        Forecast forecast = factory.create(productRefNo, today);
-        List<ShortageEntity> shortages = forecast.findShortages(
-                range(today, confShortagePredictionDaysAhead)
-        );
-
-        List<ShortageEntity> previous = shortageDao.getForProduct(productRefNo);
-        if (!shortages.isEmpty() && !shortages.equals(previous)) {
-            notificationService.alertPlanner(shortages);
-            if (forecast.getLocked() > 0 &&
-                    shortages.get(0).getAtDay()
-                            .isBefore(today.plusDays(confIncreaseQATaskPriorityInDays))) {
-                jiraService.increasePriorityFor(productRefNo);
-            }
-            shortageDao.save(shortages);
-        }
-        if (shortages.isEmpty() && !previous.isEmpty()) {
-            shortageDao.delete(productRefNo);
-        }
     }
 
 }

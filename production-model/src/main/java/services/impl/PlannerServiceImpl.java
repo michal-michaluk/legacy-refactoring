@@ -2,41 +2,26 @@ package services.impl;
 
 import api.PlanViewDto;
 import api.PlannerService;
-import dao.*;
+import dao.FormDao;
+import dao.LineDao;
+import dao.ProductionDao;
 import entities.FormEntity;
 import entities.LineEntity;
 import entities.ProductionEntity;
-import entities.ShortageEntity;
-import external.JiraService;
-import external.NotificationsService;
-import forecast.Forecast;
-import forecast.ForecastFactory;
 import tools.Util;
 
-import java.time.Clock;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
-
-import static forecast.DateRange.range;
 
 public class PlannerServiceImpl implements PlannerService {
 
     //Inject all
     private ProductionDao productionDao;
-    private ForecastFactory factory;
     private LineDao lineDao;
     private FormDao formDao;
-    private ShortageDao shortageDao;
-
-    private NotificationsService notificationService;
-    private JiraService jiraService;
-    private Clock clock;
-
-    private int confShortagePredictionDaysAhead;
-    private long confIncreaseQATaskPriorityInDays;
+    private ShortageBlaBlaService service;
 
     /**
      * <pre>
@@ -235,29 +220,8 @@ public class PlannerServiceImpl implements PlannerService {
     }
 
     private void processShortages(List<ProductionEntity> products) {
-        LocalDate today = LocalDate.now(clock);
-
         for (ProductionEntity production : products) {
-            Forecast finder = factory.create(production.getForm().getRefNo(), today);
-            List<ShortageEntity> shortages = finder.findShortages(
-                    range(today, confShortagePredictionDaysAhead)
-            );
-
-
-
-            List<ShortageEntity> previous = shortageDao.getForProduct(production.getForm().getRefNo());
-            if (!shortages.isEmpty() && !shortages.equals(previous)) {
-                notificationService.markOnPlan(shortages);
-                if (finder.getLocked() > 0 &&
-                        shortages.get(0).getAtDay()
-                                .isBefore(today.plusDays(confIncreaseQATaskPriorityInDays))) {
-                    jiraService.increasePriorityFor(production.getForm().getRefNo());
-                }
-                shortageDao.save(shortages);
-            }
-            if (shortages.isEmpty() && !previous.isEmpty()) {
-                shortageDao.delete(production.getForm().getRefNo());
-            }
+            service.processShortages_Planner(production.getForm().getRefNo());
         }
     }
 }
