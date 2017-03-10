@@ -1,15 +1,10 @@
 package forecast;
 
-import dao.ShortageDao;
-import entities.ShortageEntity;
 import external.JiraService;
 import external.NotificationsService;
-import forecast.Forecast;
-import forecast.ForecastFactory;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.function.Consumer;
 
 import static forecast.DateRange.range;
@@ -20,7 +15,7 @@ import static forecast.DateRange.range;
 public class ShortagePredictionService {
 
     //Inject all
-    private ShortageDao shortageDao;
+    private ShortageRepository shortageRepository;
     private ForecastFactory factory;
 
     private NotificationsService notificationService;
@@ -31,42 +26,40 @@ public class ShortagePredictionService {
     private long confIncreaseQATaskPriorityInDays;
 
     public void processShortages_Planner(String productRefNo) {
-        processShortages(productRefNo, shortages -> notificationService.markOnPlan(shortages));
+        processShortages(productRefNo,
+                shortages -> notificationService.markOnPlan(shortages.getEntities()));
     }
 
     public void processShortages_Quality(String productRefNo) {
-        processShortages(productRefNo, shortages -> notificationService.softNotifyPlanner(shortages));
+        processShortages(productRefNo,
+                shortages -> notificationService.softNotifyPlanner(shortages.getEntities()));
     }
 
     public void processShortages_Logistic(String productRefNo) {
-        processShortages(productRefNo, shortages -> notificationService.alertPlanner(shortages));
+        processShortages(productRefNo,
+                shortages -> notificationService.alertPlanner(shortages.getEntities()));
     }
 
     public void processShortages_Warehouse(String productRefNo) {
-        processShortages(productRefNo, shortages -> notificationService.alertPlanner(shortages));
+        processShortages(productRefNo,
+                shortages -> notificationService.alertPlanner(shortages.getEntities()));
     }
 
     private void processShortages(String productRefNo,
-                                  Consumer<List<ShortageEntity>> notification) {
+                                  Consumer<Shortages> notification) {
         LocalDate today = LocalDate.now(clock);
         Forecast forecast = factory.create(productRefNo, today);
-        List<ShortageEntity> shortages = forecast.findShortages(
+        Shortages shortages = forecast.findShortages(
                 range(today, confShortagePredictionDaysAhead)
         );
 
-        List<ShortageEntity> previous = shortageDao.getForProduct(productRefNo);
-        if (!shortages.isEmpty() && !shortages.equals(previous)) {
+        Shortages previous = shortageRepository.getForProduct(productRefNo);
+        if (shortages.isDifferent(previous)) {
             notification.accept(shortages);
-            if (forecast.getLocked() > 0 &&
-                    shortages.get(0).getAtDay()
-                            .isBefore(today.plusDays(confIncreaseQATaskPriorityInDays))) {
+            if (shortages.shouldIncreasePriority(today)) {
                 jiraService.increasePriorityFor(productRefNo);
             }
-            shortageDao.save(shortages);
-        }
-        if (shortages.isEmpty() && !previous.isEmpty()) {
-            shortageDao.delete(productRefNo);
+            shortageRepository.save(shortages);
         }
     }
-
 }

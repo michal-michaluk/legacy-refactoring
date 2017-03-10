@@ -3,10 +3,10 @@ package forecast;
 import api.AdjustDemandDto;
 import entities.ShortageEntity;
 import external.CurrentStock;
+import forecast.Shortages.ShortagesBuilder;
 import lombok.AllArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -18,16 +18,12 @@ class Forecast {
     private final Map<LocalDate, Long> outputs;
     private final Map<LocalDate, DailyDemand> demands;
 
-    long getLocked() {
-        return stock.getLocked();
-    }
-
-    List<ShortageEntity> findShortages(DateRange range) {
+    Shortages findShortages(DateRange range) {
         // TODO ASK including locked or only proper parts
         // TODO ASK current stock or on day start? what if we are in the middle of production a day?
         long level = stock.getLevel();
 
-        List<ShortageEntity> gap = new LinkedList<>();
+        ShortagesBuilder shortages = Shortages.builder(stock.getLevel(), stock.getLocked());
         for (LocalDate day : range.getDays()) {
             DailyDemand demand = demands.getOrDefault(day, DailyDemand.zero(day));
             long produced = outputs.getOrDefault(day, 0L);
@@ -35,21 +31,13 @@ class Forecast {
             long levelOnDelivery = demand.calculate(level, produced);
 
             if (levelOnDelivery < 0) {
-                gap.add(createShortage(day));
+                shortages.add(productRefNo, day);
             }
             long endOfDayLevel = level + produced - demand.getLevel();
             // TODO: ASK accumulated shortages or reset when under zero?
             level = endOfDayLevel >= 0 ? endOfDayLevel : 0;
         }
-        return gap;
-    }
-
-    private ShortageEntity createShortage(LocalDate day) {
-        ShortageEntity entity = new ShortageEntity();
-        entity.setRefNo(productRefNo);
-        entity.setFound(LocalDate.now());
-        entity.setAtDay(day);
-        return entity;
+        return shortages.build();
     }
 
     List<ShortageEntity> tryShortages(DateRange range, AdjustDemandDto withAdjustement) {
