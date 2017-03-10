@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
 
-import static tools.DateRange.range;
+import static forecast.DateRange.range;
 
 public class PlannerServiceImpl implements PlannerService {
 

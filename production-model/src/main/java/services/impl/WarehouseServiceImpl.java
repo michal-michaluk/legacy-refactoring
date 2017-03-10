@@ -14,7 +14,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
-import static tools.DateRange.range;
+import static forecast.DateRange.range;
 
 public class WarehouseServiceImpl implements WarehouseService {
 

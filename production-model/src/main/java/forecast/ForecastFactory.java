@@ -6,13 +6,14 @@ import entities.ProductionEntity;
 import enums.DeliverySchema;
 import external.CurrentStock;
 import external.StockService;
-import tools.DailyDemand;
-import tools.Util;
 
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import static forecast.Util.*;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -24,7 +25,7 @@ public class ForecastFactory {
     private DemandDao demandDao;
     private StockService stockService;
     private ProductionDao productionDao;
-
+    private Map<DeliverySchema, Calc> calculationVariants = init();
 
     public Forecast create(String productRefNo, LocalDate today) {
         CurrentStock stock = stockService.getCurrentStock(productRefNo);
@@ -47,25 +48,20 @@ public class ForecastFactory {
                 .stream()
                 .map(demandEntity -> new DailyDemand(
                         demandEntity.getDay(),
-                        Util.getLevel(demandEntity),
-                        pickStrategy(Util.getDeliverySchema(demandEntity))
+                        getLevel(demandEntity),
+                        calculationVariants.getOrDefault(
+                                getDeliverySchema(demandEntity),
+                                Calc.NOT_IMPLEMENTED)
                 ))
                 .collect(toMap(DailyDemand::getDate,
                         Function.identity())
                 );
     }
 
-    private Calc pickStrategy(DeliverySchema schema) {
-        if (schema == DeliverySchema.atDayStart) {
-            return Calc.atDayStart;
-        } else if (schema == DeliverySchema.tillEndOfDay) {
-            return Calc.tillEndOfDay;
-        } else if (schema == DeliverySchema.every3hours) {
-            // TODO WTF ?? we need to rewrite that app :/
-            return Calc.NOT_IMPLEMENTED;
-        } else {
-            // TODO implement other variants
-            return Calc.NOT_IMPLEMENTED;
-        }
+    private Map<DeliverySchema, Calc> init() {
+        Map<DeliverySchema, Calc> map = new HashMap<>();
+        map.put(DeliverySchema.atDayStart, Calc.atDayStart);
+        map.put(DeliverySchema.tillEndOfDay, Calc.tillEndOfDay);
+        return Collections.unmodifiableMap(map);
     }
 }

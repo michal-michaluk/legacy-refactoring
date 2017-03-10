@@ -17,7 +17,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
-import static tools.DateRange.range;
+import static forecast.DateRange.range;
 
 public class LogisticServiceImpl implements LogisticService {
 
@@ -98,15 +98,15 @@ public class LogisticServiceImpl implements LogisticService {
 
     private void processShortages(String productRefNo) {
         LocalDate today = LocalDate.now(clock);
-        Forecast finder = factory.create(productRefNo, today);
-        List<ShortageEntity> shortages = finder.findShortages(
+        Forecast forecast = factory.create(productRefNo, today);
+        List<ShortageEntity> shortages = forecast.findShortages(
                 range(today, confShortagePredictionDaysAhead)
         );
 
         List<ShortageEntity> previous = shortageDao.getForProduct(productRefNo);
         if (!shortages.isEmpty() && !shortages.equals(previous)) {
             notificationService.alertPlanner(shortages);
-            if (finder.getLocked() > 0 &&
+            if (forecast.getLocked() > 0 &&
                     shortages.get(0).getAtDay()
                             .isBefore(today.plusDays(confIncreaseQATaskPriorityInDays))) {
                 jiraService.increasePriorityFor(productRefNo);

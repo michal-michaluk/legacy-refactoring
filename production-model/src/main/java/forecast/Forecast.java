@@ -2,12 +2,8 @@ package forecast;
 
 import api.AdjustDemandDto;
 import entities.ShortageEntity;
-import enums.DeliverySchema;
 import external.CurrentStock;
 import lombok.AllArgsConstructor;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import tools.DailyDemand;
-import tools.DateRange;
 
 import java.time.LocalDate;
 import java.util.LinkedList;
@@ -38,7 +34,7 @@ public class Forecast {
 
             long levelOnDelivery = demand.calculate(level, produced);
 
-            if (!(levelOnDelivery >= 0)) {
+            if (levelOnDelivery < 0) {
                 gap.add(createShortage(day));
             }
             long endOfDayLevel = level + produced - demand.getLevel();
