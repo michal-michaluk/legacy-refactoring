@@ -19,7 +19,7 @@ import static java.util.stream.Collectors.toMap;
 /**
  * Created by michal on 09.03.2017.
  */
-public class ForecastFactory {
+class ForecastFactory {
 
     // inject with spring
     private DemandDao demandDao;
@@ -27,7 +27,7 @@ public class ForecastFactory {
     private ProductionDao productionDao;
     private Map<DeliverySchema, Calc> calculationVariants = init();
 
-    public Forecast create(String productRefNo, LocalDate today) {
+    Forecast create(String productRefNo, LocalDate today) {
         CurrentStock stock = stockService.getCurrentStock(productRefNo);
         Map<LocalDate, Long> outputs = loadProductions(productRefNo, today);
         Map<LocalDate, DailyDemand> demandsPerDay = loadDailyDemands(productRefNo, today);

@@ -11,18 +11,18 @@ import java.util.List;
 import java.util.Map;
 
 @AllArgsConstructor
-public class Forecast {
+class Forecast {
 
     private final String productRefNo;
     private final CurrentStock stock;
     private final Map<LocalDate, Long> outputs;
     private final Map<LocalDate, DailyDemand> demands;
 
-    public long getLocked() {
+    long getLocked() {
         return stock.getLocked();
     }
 
-    public List<ShortageEntity> findShortages(DateRange range) {
+    List<ShortageEntity> findShortages(DateRange range) {
         // TODO ASK including locked or only proper parts
         // TODO ASK current stock or on day start? what if we are in the middle of production a day?
         long level = stock.getLevel();
@@ -52,7 +52,7 @@ public class Forecast {
         return entity;
     }
 
-    public List<ShortageEntity> tryShortages(DateRange range, AdjustDemandDto withAdjustement) {
+    List<ShortageEntity> tryShortages(DateRange range, AdjustDemandDto withAdjustement) {
         // TODO do we need that ?
         return null;
     }

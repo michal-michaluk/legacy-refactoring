@@ -8,6 +8,7 @@ import dao.ProductionDao;
 import entities.FormEntity;
 import entities.LineEntity;
 import entities.ProductionEntity;
+import forecast.ShortagePredictionService;
 import tools.Util;
 
 import java.time.Duration;
@@ -21,7 +22,7 @@ public class PlannerServiceImpl implements PlannerService {
     private ProductionDao productionDao;
     private LineDao lineDao;
     private FormDao formDao;
-    private ShortageBlaBlaService service;
+    private ShortagePredictionService service;
 
     /**
      * <pre>

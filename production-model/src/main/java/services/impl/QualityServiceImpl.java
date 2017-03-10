@@ -2,10 +2,11 @@ package services.impl;
 
 import api.QualityService;
 import api.StorageUnit;
+import forecast.ShortagePredictionService;
 
 public class QualityServiceImpl implements QualityService {
 
-    private ShortageBlaBlaService service;
+    private ShortagePredictionService service;
 
     /**
      * <pre>

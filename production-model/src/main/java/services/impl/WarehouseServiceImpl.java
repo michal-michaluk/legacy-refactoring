@@ -3,10 +3,11 @@ package services.impl;
 import api.DeliveryNote;
 import api.StorageUnit;
 import api.WarehouseService;
+import forecast.ShortagePredictionService;
 
 public class WarehouseServiceImpl implements WarehouseService {
 
-    private ShortageBlaBlaService service;
+    private ShortagePredictionService service;
     /**
      * <pre>
      * Register newly produced parts on stock.

@@ -6,6 +6,7 @@ import api.StockForecastDto;
 import dao.DemandDao;
 import entities.DemandEntity;
 import entities.ManualAdjustmentEntity;
+import forecast.ShortagePredictionService;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -14,7 +15,7 @@ public class LogisticServiceImpl implements LogisticService {
 
     //Inject all
     private DemandDao demandDao;
-    private ShortageBlaBlaService service;
+    private ShortagePredictionService service;
     private Clock clock;
 
     /**
