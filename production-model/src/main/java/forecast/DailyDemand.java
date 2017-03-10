@@ -8,7 +8,7 @@ import java.time.LocalDate;
  * Created by michal on 09.03.2017.
  */
 @Value
-class DailyDemand {
+public class DailyDemand {
     private final LocalDate date;
     private final long level;
     private final Calc calc;

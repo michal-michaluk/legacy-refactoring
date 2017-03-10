@@ -1,29 +1,26 @@
 package forecast;
 
-import api.AdjustDemandDto;
-import entities.ShortageEntity;
-import external.CurrentStock;
 import forecast.Shortages.ShortagesBuilder;
 import lombok.AllArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 
 @AllArgsConstructor
-class Forecast {
+public class Forecast {
 
     private final String productRefNo;
-    private final CurrentStock stock;
+    private final long stock;
+    private final long locked;
     private final Map<LocalDate, Long> outputs;
     private final Map<LocalDate, DailyDemand> demands;
 
     Shortages findShortages(DateRange range) {
         // TODO ASK including locked or only proper parts
         // TODO ASK current stock or on day start? what if we are in the middle of production a day?
-        long level = stock.getLevel();
+        long level = stock;
 
-        ShortagesBuilder shortages = Shortages.builder(stock.getLevel(), stock.getLocked());
+        ShortagesBuilder shortages = Shortages.builder(productRefNo, stock, locked);
         for (LocalDate day : range.getDays()) {
             DailyDemand demand = demands.getOrDefault(day, DailyDemand.zero(day));
             long produced = outputs.getOrDefault(day, 0L);
@@ -40,8 +37,8 @@ class Forecast {
         return shortages.build();
     }
 
-    List<ShortageEntity> tryShortages(DateRange range, AdjustDemandDto withAdjustement) {
-        // TODO do we need that ?
-        return null;
-    }
+//    Shortages tryShortages(DateRange range, AdjustDemandDto withAdjustement) {
+//        // TODO do we need that ?
+//        return null;
+//    }
 }

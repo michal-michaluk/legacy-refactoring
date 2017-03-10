@@ -1,12 +1,7 @@
 package forecast;
 
 import entities.DemandEntity;
-import entities.FormEntity;
-import entities.LineEntity;
 import enums.DeliverySchema;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
 
 /**
  * Created by michal on 07.03.2017.

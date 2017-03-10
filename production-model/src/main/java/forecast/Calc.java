@@ -21,7 +21,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
  * customer always specifies desired delivery schema
  * (increase amount in scheduled transport or organize extra transport at given time)
  */
-interface Calc {
+public interface Calc {
 
     Calc atDayStart = (level, demand, produced) -> level - demand.getLevel();
     Calc tillEndOfDay = (level, demand, produced) -> level - demand.getLevel() + produced;

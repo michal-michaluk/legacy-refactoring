@@ -1,7 +1,7 @@
 package forecast;
 
 import entities.ShortageEntity;
-import lombok.Builder;
+import lombok.Value;
 
 import java.time.LocalDate;
 import java.util.LinkedList;
@@ -10,18 +10,15 @@ import java.util.List;
 /**
  * Created by michal on 10.03.2017.
  */
+@Value
 public class Shortages {
 
+    private final String productRefNo;
     private final long locked;
-    private final List<ShortageEntity> list;
+    private final List<ShortageEntity> entities;
 
-    private Shortages(long locked, List<ShortageEntity> list) {
-        this.locked = locked;
-        this.list = list;
-    }
-
-    public static ShortagesBuilder builder(long initLevel, long locked) {
-        return new ShortagesBuilder(initLevel, locked);
+    public static ShortagesBuilder builder(String productRefNo, long initLevel, long locked) {
+        return new ShortagesBuilder(productRefNo, initLevel, locked);
     }
 
     public boolean shouldIncreasePriority(LocalDate date) {
@@ -29,22 +26,20 @@ public class Shortages {
     }
 
     public boolean isDifferent(Shortages other) {
-        return !list.isEmpty() && !list.equals(other.list);
+        return !entities.isEmpty() && !entities.equals(other.entities);
     }
 
     public boolean isBefore(LocalDate date) {
-        return list.get(0).getAtDay().isBefore(date);
-    }
-
-    public List<ShortageEntity> getEntities() {
-        return list;
+        return entities.get(0).getAtDay().isBefore(date);
     }
 
     public static class ShortagesBuilder {
+        private final String productRefNo;
         private final long locked;
-        private List<ShortageEntity> list = new LinkedList<>();
+        private List<ShortageEntity> entities = new LinkedList<>();
 
-        private ShortagesBuilder(long initLevel, long locked) {
+        private ShortagesBuilder(String productRefNo, long initLevel, long locked) {
+            this.productRefNo = productRefNo;
             this.locked = locked;
         }
 
@@ -53,11 +48,11 @@ public class Shortages {
             entity.setRefNo(productRefNo);
             entity.setFound(LocalDate.now());
             entity.setAtDay(day);
-            list.add(entity);
+            entities.add(entity);
         }
 
         public Shortages build() {
-            return new Shortages(locked, list);
+            return new Shortages(productRefNo, locked, entities);
         }
     }
 }

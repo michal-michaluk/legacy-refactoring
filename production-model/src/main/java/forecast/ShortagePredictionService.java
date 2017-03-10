@@ -16,7 +16,7 @@ public class ShortagePredictionService {
 
     //Inject all
     private ShortageRepository shortageRepository;
-    private ForecastFactory factory;
+    private ForecastRepository forecasts;
 
     private NotificationsService notificationService;
     private JiraService jiraService;
@@ -48,7 +48,7 @@ public class ShortagePredictionService {
     private void processShortages(String productRefNo,
                                   Consumer<Shortages> notification) {
         LocalDate today = LocalDate.now(clock);
-        Forecast forecast = factory.create(productRefNo, today);
+        Forecast forecast = forecasts.create(productRefNo, today);
         Shortages shortages = forecast.findShortages(
                 range(today, confShortagePredictionDaysAhead)
         );

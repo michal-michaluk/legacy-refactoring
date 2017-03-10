@@ -8,6 +8,7 @@ import forecast.ShortagePredictionService;
 public class WarehouseServiceImpl implements WarehouseService {
 
     private ShortagePredictionService service;
+
     /**
      * <pre>
      * Register newly produced parts on stock.
