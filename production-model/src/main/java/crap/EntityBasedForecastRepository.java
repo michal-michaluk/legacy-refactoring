@@ -1,15 +1,15 @@
 package crap;
 
-import dao.DemandDao;
-import dao.ProductionDao;
-import entities.ProductionEntity;
-import enums.DeliverySchema;
-import external.CurrentStock;
-import external.StockService;
-import forecast.Calc;
-import forecast.DailyDemand;
-import forecast.Forecast;
-import forecast.ForecastRepository;
+import demnd.DemandDao;
+import production.plan.ProductionDao;
+import production.plan.ProductionEntity;
+import demnd.DeliverySchema;
+import warehouse.CurrentStock;
+import warehouse.StockService;
+import shortages.Calc;
+import shortages.DailyDemand;
+import shortages.Forecast;
+import shortages.ForecastRepository;
 
 import java.time.LocalDate;
 import java.util.Collections;
@@ -17,8 +17,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import static forecast.Util.getDeliverySchema;
-import static forecast.Util.getLevel;
+import static shortages.Util.getDeliverySchema;
+import static shortages.Util.getLevel;
 import static java.util.stream.Collectors.toMap;
 
 /**
