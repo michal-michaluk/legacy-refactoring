@@ -25,23 +25,19 @@ public class ShortagePredictionService {
     private long confIncreaseQATaskPriorityInDays;
 
     public void processShortages_Planner(String productRefNo) {
-        processShortages(productRefNo,
-                shortages -> notificationService.markOnPlan(shortages.getEntities()));
+        processShortages(productRefNo, notificationService::markOnPlan);
     }
 
     public void processShortages_Quality(String productRefNo) {
-        processShortages(productRefNo,
-                shortages -> notificationService.softNotifyPlanner(shortages.getEntities()));
+        processShortages(productRefNo, notificationService::softNotifyPlanner);
     }
 
     public void processShortages_Logistic(String productRefNo) {
-        processShortages(productRefNo,
-                shortages -> notificationService.alertPlanner(shortages.getEntities()));
+        processShortages(productRefNo, notificationService::alertPlanner);
     }
 
     public void processShortages_Warehouse(String productRefNo) {
-        processShortages(productRefNo,
-                shortages -> notificationService.alertPlanner(shortages.getEntities()));
+        processShortages(productRefNo, notificationService::alertPlanner);
     }
 
     private void processShortages(String productRefNo,

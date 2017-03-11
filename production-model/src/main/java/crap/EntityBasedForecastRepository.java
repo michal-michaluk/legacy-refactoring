@@ -6,8 +6,6 @@ import production.plan.ProductionEntity;
 import demnd.DeliverySchema;
 import warehouse.CurrentStock;
 import warehouse.StockService;
-import shortages.Calc;
-import shortages.DailyDemand;
 import shortages.Forecast;
 import shortages.ForecastRepository;
 
@@ -30,13 +28,13 @@ class EntityBasedForecastRepository implements ForecastRepository {
     private DemandDao demandDao;
     private StockService stockService;
     private ProductionDao productionDao;
-    private Map<DeliverySchema, Calc> calculationVariants = init();
+    private Map<DeliverySchema, Forecast.Calc> calculationVariants = init();
 
     @Override
     public Forecast create(String productRefNo, LocalDate today) {
         CurrentStock stock = stockService.getCurrentStock(productRefNo);
         Map<LocalDate, Long> outputs = loadProductions(productRefNo, today);
-        Map<LocalDate, DailyDemand> demandsPerDay = loadDailyDemands(productRefNo, today);
+        Map<LocalDate, Forecast.DailyDemand> demandsPerDay = loadDailyDemands(productRefNo, today);
 
         return new Forecast(
                 productRefNo, stock.getLevel(),
@@ -52,25 +50,25 @@ class EntityBasedForecastRepository implements ForecastRepository {
                 );
     }
 
-    private Map<LocalDate, DailyDemand> loadDailyDemands(String productRefNo, LocalDate today) {
+    private Map<LocalDate, Forecast.DailyDemand> loadDailyDemands(String productRefNo, LocalDate today) {
         return demandDao.findFrom(today.atStartOfDay(), productRefNo)
                 .stream()
-                .map(demandEntity -> new DailyDemand(
+                .map(demandEntity -> new Forecast.DailyDemand(
                         demandEntity.getDay(),
                         getLevel(demandEntity),
                         calculationVariants.getOrDefault(
                                 getDeliverySchema(demandEntity),
-                                Calc.NOT_IMPLEMENTED)
+                                Forecast.Calc.NOT_IMPLEMENTED)
                 ))
-                .collect(toMap(DailyDemand::getDate,
+                .collect(toMap(Forecast.DailyDemand::getDate,
                         Function.identity())
                 );
     }
 
-    private Map<DeliverySchema, Calc> init() {
-        Map<DeliverySchema, Calc> map = new HashMap<>();
-        map.put(DeliverySchema.atDayStart, Calc.atDayStart);
-        map.put(DeliverySchema.tillEndOfDay, Calc.tillEndOfDay);
+    private Map<DeliverySchema, Forecast.Calc> init() {
+        Map<DeliverySchema, Forecast.Calc> map = new HashMap<>();
+        map.put(DeliverySchema.atDayStart, Forecast.Calc.atDayStart);
+        map.put(DeliverySchema.tillEndOfDay, Forecast.Calc.tillEndOfDay);
         return Collections.unmodifiableMap(map);
     }
 }
